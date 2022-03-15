@@ -1,29 +1,27 @@
-// We require the Hardhat Runtime Environment explicitly here. This is optional
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// When running the script with `npx hardhat run <script>` you'll find the Hardhat
-// Runtime Environment's members available in the global scope.
 import { ethers } from "hardhat";
 
-async function main() {
-  // Hardhat always runs the compile task when running scripts with its command
-  // line interface.
-  //
-  // If this script is run directly using `node` you may want to call compile
-  // manually to make sure everything is compiled
-  // await hre.run('compile');
+const RARITIES = [
+  { name: "common", index: 0, value: 100000 },
+  { name: "uncommon", index: 1, value: 10000 },
+  { name: "rare", index: 2, value: 5000 },
+  { name: "epic", index: 3, value: 1000 },
+  { name: "legendary", index: 4, value: 100 },
+  { name: "mythic", index: 5, value: 10 },
+  { name: "unique", index: 6, value: 1 },
+];
 
-  // We get the contract to deploy
-  const Greeter = await ethers.getContractFactory("Greeter");
-  const greeter = await Greeter.deploy("Hello, Hardhat!");
+const DEFAULT_RARITY_PRICE = "100000000000000000000"; // 100 UCC
 
-  await greeter.deployed();
+/**
+ * @dev Steps:
+ * Deploy the Collection implementation
+ * Deploy the committee with the desired members. The owner will be the DAO contract / currently a EOA
+ * Deploy the collection Manager. The owner will be the DAO contract / currently a EOA
+ * Deploy the forwarder. Caller Is the collection manager.
+ * Deploy the collection Factory. Owner is the forwarder.
+ */
+async function main() {}
 
-  console.log("Greeter deployed to:", greeter.address);
-}
-
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
   console.error(error);
   process.exitCode = 1;

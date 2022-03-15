@@ -26,6 +26,7 @@ abstract contract ERC721BaseCollection is
     uint40 public constant MAX_ITEM_ID = type(uint40).max;
     uint216 public constant MAX_ISSUED_ID = type(uint216).max;
     bytes32 internal constant EMPTY_CONTENT = bytes32(0);
+    string private __baseURI;
 
     struct ItemParam {
         string rarity;
@@ -119,7 +120,7 @@ abstract contract ERC721BaseCollection is
      * @notice Create the contract
      * @param _name - name of the contract
      * @param _symbol - symbol of the contract
-     * @param _baseURI - base URI for token URIs
+     * @param baseURI_ - base URI for token URIs
      * @param _creator - creator address
      * @param _shouldComplete - Whether the collection should be completed by the end of this call
      * @param _isApproved - Whether the collection should be approved by the end of this call
@@ -129,7 +130,7 @@ abstract contract ERC721BaseCollection is
     function initialize(
         string memory _name,
         string memory _symbol,
-        string memory _baseURI,
+        string memory baseURI_,
         address _creator,
         bool _shouldComplete,
         bool _isApproved,
@@ -151,7 +152,7 @@ abstract contract ERC721BaseCollection is
         // ERC721 init
         _initERC721(_name, _symbol);
         // Base URI init
-        setBaseURI(_baseURI);
+        setBaseURI(baseURI_);
         // Creator init
         creator = _creator;
         // Rarities init
@@ -668,11 +669,28 @@ abstract contract ERC721BaseCollection is
 
     /**
      * @notice Set Base URI
-     * @param _baseURI - base URI for token URIs
+     * @param baseURI_ - base URI for token URIs
      */
-    function setBaseURI(string memory _baseURI) public onlyOwner {
-        emit BaseURI(baseURI(), _baseURI);
-        _setBaseURI(_baseURI);
+    function setBaseURI(string memory baseURI_) public onlyOwner {
+        emit BaseURI(_baseURI(), baseURI_);
+        _setBaseURI(baseURI_);
+    }
+
+    /**
+     * @dev Internal function to set the base URI for all token IDs. It is
+     * automatically added as a prefix to the value returned in {tokenURI},
+     * or to the token ID if {tokenURI} is empty.
+     */
+    function _setBaseURI(string memory baseURI_) internal virtual {
+        __baseURI = baseURI_;
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return __baseURI;
+    }
+
+    function baseURI() public view returns (string memory) {
+        return _baseURI();
     }
 
     /**
@@ -700,7 +718,7 @@ abstract contract ERC721BaseCollection is
         return
             string(
                 abi.encodePacked(
-                    baseURI(),
+                    _baseURI(),
                     id.uintToString(),
                     "/",
                     "0x",
