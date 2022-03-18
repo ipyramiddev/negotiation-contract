@@ -1,42 +1,39 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
 
-contract ERC721CollectionFactory is Ownable {
-    using Clones for address;
+import "../commons/MinimalProxyFactory.sol";
 
+contract ERC721CollectionFactory is Ownable, MinimalProxyFactory {
     address[] public collections;
-    address public implementation;
     mapping(address => bool) public isCollectionFromFactory;
-
-    event CollectionCreated(address indexed _address, bytes32 _salt);
 
     /**
      * @notice Create the contract
      * @param _owner - contract owner
      * @param _implementation - contract implementation
      */
-    constructor(address _owner, address _implementation) {
-        implementation = _implementation;
+    constructor(address _owner, address _implementation)
+        MinimalProxyFactory(_implementation)
+    {
         transferOwnership(_owner);
     }
 
     /**
      * @notice Create a collection
      * @param _salt - arbitrary 32 bytes hexa
+     * @param _data - call data used to call the contract already created if passed
      * @return addr - address of the contract created
      */
-    function createCollection(bytes32 _salt)
+    function createCollection(bytes32 _salt, bytes memory _data)
         external
         onlyOwner
         returns (address addr)
     {
         // Deploy a new collection
-        implementation.cloneDeterministic(_salt);
-        emit CollectionCreated(implementation, _salt);
+        addr = _createProxy(_salt, _data);
 
         // Transfer ownership to the owner after deployment
         Ownable(addr).transferOwnership(owner());
@@ -45,19 +42,6 @@ contract ERC721CollectionFactory is Ownable {
         // This use storage and therefore make deployments expensive.
         collections.push(addr);
         isCollectionFromFactory[addr] = true;
-    }
-
-    /**
-     * @notice Get collection address
-     * @param _salt - arbitrary 32 bytes hexa
-     */
-    function getCollectionAddress(bytes32 _salt)
-        external
-        view
-        returns (address)
-    {
-        require(implementation != address(0), "implementation must be set");
-        return implementation.predictDeterministicAddress(_salt);
     }
 
     /**
