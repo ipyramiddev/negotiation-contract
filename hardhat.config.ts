@@ -6,6 +6,7 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import { getDeployParams } from "./scripts/utils";
 
 dotenv.config();
 
@@ -42,6 +43,14 @@ const config: HardhatUserConfig = {
       accounts:
         process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
     },
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      gas: 12000000,
+      chainId: 31337,
+      blockGasLimit: 0x1fffffffffffff,
+      allowUnlimitedContractSize: true,
+    },
+    deploy: getDeployParams(),
   },
   gasReporter: {
     enabled: process.env.REPORT_GAS !== undefined,

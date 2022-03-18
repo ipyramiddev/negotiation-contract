@@ -4,15 +4,9 @@
   "description": "Unicial wereable contracts",
   "main": "index.js",
   "scripts": {
-    "test": "scripts/test.sh",
-    "test:gas-report": "REPORT_GAS=true NETWORK=local npm run test",
-    "test:watch": "nodemon test/** contracts/** --exec 'npm test'",
-    "lint": "npx eslint test && npx solium -d contracts",
-    "lint:fix": "npx eslint --fix test && npx solium -d contracts --fix",
-    "build": "babel test --out-dir tests",
+    "test": "npx hardhat test --network localhost",
     "compile": "npx hardhat compile",
-    "semantic-release": "semantic-release",
-    "commit-msg": "validate-commit-msg"
+    "deploy": "npx hardhat run --network deploy scripts/deploy.ts"
   },
   "repository": {
     "type": "git",
