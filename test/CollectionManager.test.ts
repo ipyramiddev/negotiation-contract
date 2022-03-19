@@ -3,6 +3,8 @@ import { BigNumber, Contract, Signer } from "ethers";
 import { artifacts, ethers } from "hardhat";
 import { solidity } from "ethereum-waffle";
 import { getChainId } from "./helper/ChainId";
+import { Interface } from "ethers/lib/utils";
+import { sendMetaTx } from "./helper/MetaTx";
 
 import {
   ZERO_ADDRESS,
@@ -13,6 +15,7 @@ import {
   getRarityNames,
   genRanHex,
   ITEMS,
+  RARITIES_OBJECT,
 } from "./helper/Collection";
 import { hexlify, zeroPad } from "ethers/lib/utils";
 
@@ -386,8 +389,7 @@ describe("CollectionManager", function () {
 
     it("should create a collection", async function () {
       const salt = "0x" + genRanHex(64);
-
-      await collectionManagerContract
+      let createCollectionTx = await collectionManagerContract
         .connect(user)
         .createCollection(
           forwarderContract.address,
@@ -399,203 +401,179 @@ describe("CollectionManager", function () {
           userAddr,
           ITEMS
         );
-      // collectionContract = await ERC721CollectionV2.at(logs[0].address);
+      let logs = (await createCollectionTx.wait()).events;
+      const collectionContractAddress = logs[1].address;
+      collectionContract = await ethers.getContractAt(
+        "ERC721Collection",
+        collectionContractAddress
+      );
+      expect(await collectionContract.name()).to.equal(name);
+      expect(await collectionContract.symbol()).to.equal(symbol);
+      expect(await collectionContract.baseURI()).to.equal(baseURI);
+      expect(await collectionContract.creator()).to.equal(userAddr);
+      expect(await collectionContract.isApproved()).to.equal(false);
+      expect(await collectionContract.isCompleted()).to.equal(true);
+      expect(await collectionContract.rarities()).to.equal(
+        raritiesContract.address
+      );
+      expect(await collectionContract.itemsCount()).to.equal(ITEMS.length);
 
-      // expect(logs[0].address).to.not.be.equal(ZERO_ADDRESS);
+      for (let i = 0; i < ITEMS.length; i++) {
+        const {
+          rarity,
+          maxSupply,
+          totalSupply,
+          price,
+          beneficiary,
+          metadata,
+          contentHash,
+        } = await collectionContract.items(i);
 
-      // const name_ = await collectionContract.name();
-      // expect(name_).to.be.equal(name);
-
-      // const symbol_ = await collectionContract.symbol();
-      // expect(symbol_).to.be.equal(symbol);
-
-      // const baseURI_ = await collectionContract.baseURI();
-      // expect(baseURI_).to.be.equal(baseURI);
-
-      // const creator_ = await collectionContract.creator();
-      // expect(creator_).to.be.equal(user);
-
-      // const isApproved = await collectionContract.isApproved();
-      // expect(isApproved).to.be.equal(false);
-
-      // const isCompleted = await collectionContract.isCompleted();
-      // expect(isCompleted).to.be.equal(true);
-
-      // const rarities = await collectionContract.rarities();
-      // expect(rarities).to.be.equal(raritiesContract.address);
-
-      // const itemLength = await collectionContract.itemsCount();
-
-      // expect(ITEMS.length).to.be.eq.BN(itemLength);
-
-      // for (let i = 0; i < ITEMS.length; i++) {
-      //   const {
-      //     rarity,
-      //     maxSupply,
-      //     totalSupply,
-      //     price,
-      //     beneficiary,
-      //     metadata,
-      //     contentHash,
-      //   } = await collectionContract.items(i);
-
-      //   expect(rarity).to.be.equal(ITEMS[i][0]);
-      //   expect(maxSupply).to.be.eq.BN(RARITIES[ITEMS[i][0]].value);
-      //   expect(totalSupply).to.be.eq.BN(0);
-      //   expect(price).to.be.eq.BN(ITEMS[i][1]);
-      //   expect(beneficiary.toLowerCase()).to.be.equal(
-      //     ITEMS[i][2].toLowerCase()
-      //   );
-      //   expect(metadata).to.be.equal(ITEMS[i][3]);
-      //   expect(contentHash).to.be.equal("");
-      // }
+        expect(rarity).to.equal(ITEMS[i][0]);
+        expect(maxSupply).to.eq(RARITIES_OBJECT[ITEMS[i][0].toString()].value);
+        expect(totalSupply).to.eq(0);
+        expect(price).to.eq(ITEMS[i][1]);
+        expect(beneficiary.toLowerCase()).to.eq(
+          ITEMS[i][2].toString().toLowerCase()
+        );
+        expect(metadata).to.equal(ITEMS[i][3]);
+        expect(contentHash).to.equal("");
+      }
     });
 
-    // it('should create a collection :: Relayed EIP721', async function () {
-    //   const salt = web3.utils.randomHex(32)
-    //   const functionSignature = web3.eth.abi.encodeFunctionCall(
-    //     {
-    //       inputs: [
-    //         {
-    //           internalType: 'contract IForwarder',
-    //           name: '_forwarder',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'contract IERC721CollectionFactoryV2',
-    //           name: '_factory',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'bytes32',
-    //           name: '_salt',
-    //           type: 'bytes32',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_name',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_symbol',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_baseURI',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'address',
-    //           name: '_creator',
-    //           type: 'address',
-    //         },
-    //         {
-    //           components: [
-    //             {
-    //               internalType: 'string',
-    //               name: 'rarity',
-    //               type: 'string',
-    //             },
-    //             {
-    //               internalType: 'uint256',
-    //               name: 'price',
-    //               type: 'uint256',
-    //             },
-    //             {
-    //               internalType: 'address',
-    //               name: 'beneficiary',
-    //               type: 'address',
-    //             },
-    //             {
-    //               internalType: 'string',
-    //               name: 'metadata',
-    //               type: 'string',
-    //             },
-    //           ],
-    //           internalType: 'struct IERC721CollectionV2.ItemParam[]',
-    //           name: '_items',
-    //           type: 'tuple[]',
-    //         },
-    //       ],
-    //       name: 'createCollection',
-    //       outputs: [],
-    //       stateMutability: 'nonpayable',
-    //       type: 'function',
-    //     },
-    //     [
-    //       forwarderContract.address,
-    //       factoryContract.address,
-    //       salt,
-    //       name,
-    //       symbol,
-    //       baseURI,
-    //       user,
-    //       ITEMS,
-    //     ]
-    //   )
+    it("should create a collection :: Relayed EIP721", async function () {
+      const salt = "0x" + genRanHex(64);
+      const createCollectionABI = [
+        {
+          inputs: [
+            {
+              internalType: "contract IForwarder",
+              name: "_forwarder",
+              type: "address",
+            },
+            {
+              internalType: "contract IERC721CollectionFactory",
+              name: "_factory",
+              type: "address",
+            },
+            {
+              internalType: "bytes32",
+              name: "_salt",
+              type: "bytes32",
+            },
+            {
+              internalType: "string",
+              name: "_name",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_symbol",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_baseURI",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "_creator",
+              type: "address",
+            },
+            {
+              components: [
+                {
+                  internalType: "string",
+                  name: "rarity",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "price",
+                  type: "uint256",
+                },
+                {
+                  internalType: "address",
+                  name: "beneficiary",
+                  type: "address",
+                },
+                {
+                  internalType: "string",
+                  name: "metadata",
+                  type: "string",
+                },
+              ],
+              internalType: "struct IERC721Collection.ItemParam[]",
+              name: "_items",
+              type: "tuple[]",
+            },
+          ],
+          name: "createCollection",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ];
+      let iface = new ethers.utils.Interface(createCollectionABI);
+      const functionSignature = iface.encodeFunctionData("createCollection", [
+        forwarderContract.address,
+        factoryContract.address,
+        salt,
+        name,
+        symbol,
+        baseURI,
+        userAddr,
+        ITEMS,
+      ]);
+      let createCollectionTx = await sendMetaTx(
+        collectionManagerContract,
+        functionSignature,
+        userAddr,
+        relayer,
+        null,
+        "Unicial Collection Manager",
+        "1"
+      );
+      let logs = (await createCollectionTx.wait()).events;
+      const collectionContractAddress = logs[2].address;
+      collectionContract = await ethers.getContractAt(
+        "ERC721Collection",
+        collectionContractAddress
+      );
+      expect(await collectionContract.name()).to.equal(name);
+      expect(await collectionContract.symbol()).to.equal(symbol);
+      expect(await collectionContract.baseURI()).to.equal(baseURI);
+      expect(await collectionContract.creator()).to.equal(userAddr);
+      expect(await collectionContract.isApproved()).to.equal(false);
+      expect(await collectionContract.isCompleted()).to.equal(true);
+      expect(await collectionContract.rarities()).to.equal(
+        raritiesContract.address
+      );
+      expect(await collectionContract.itemsCount()).to.equal(ITEMS.length);
 
-    //   const { logs } = await sendMetaTx(
-    //     collectionManagerContract,
-    //     functionSignature,
-    //     user,
-    //     relayer,
-    //     null,
-    //     'Decentraland Collection Manager',
-    //     '1'
-    //   )
+      for (let i = 0; i < ITEMS.length; i++) {
+        const {
+          rarity,
+          maxSupply,
+          totalSupply,
+          price,
+          beneficiary,
+          metadata,
+          contentHash,
+        } = await collectionContract.items(i);
 
-    //   collectionContract = await ERC721CollectionV2.at(logs[1].address)
-
-    //   const name_ = await collectionContract.name()
-    //   expect(name_).to.be.equal(name)
-
-    //   const symbol_ = await collectionContract.symbol()
-    //   expect(symbol_).to.be.equal(symbol)
-
-    //   const baseURI_ = await collectionContract.baseURI()
-    //   expect(baseURI_).to.be.equal(baseURI)
-
-    //   const creator_ = await collectionContract.creator()
-    //   expect(creator_).to.be.equal(user)
-
-    //   const owner_ = await collectionContract.owner()
-    //   expect(owner_).to.be.equal(forwarderContract.address)
-
-    //   const isApproved = await collectionContract.isApproved()
-    //   expect(isApproved).to.be.equal(false)
-
-    //   const isCompleted = await collectionContract.isCompleted()
-    //   expect(isCompleted).to.be.equal(true)
-
-    //   const rarities = await collectionContract.rarities()
-    //   expect(rarities).to.be.equal(raritiesContract.address)
-
-    //   const itemLength = await collectionContract.itemsCount()
-
-    //   expect(ITEMS.length).to.be.eq.BN(itemLength)
-
-    //   for (let i = 0; i < ITEMS.length; i++) {
-    //     const {
-    //       rarity,
-    //       maxSupply,
-    //       totalSupply,
-    //       price,
-    //       beneficiary,
-    //       metadata,
-    //       contentHash,
-    //     } = await collectionContract.items(i)
-
-    //     expect(rarity).to.be.equal(ITEMS[i][0])
-    //     expect(maxSupply).to.be.eq.BN(RARITIES[ITEMS[i][0]].value)
-    //     expect(totalSupply).to.be.eq.BN(0)
-    //     expect(price).to.be.eq.BN(ITEMS[i][1])
-    //     expect(beneficiary.toLowerCase()).to.be.equal(ITEMS[i][2].toLowerCase())
-    //     expect(metadata).to.be.equal(ITEMS[i][3])
-    //     expect(contentHash).to.be.equal('')
-    //   }
-    // })
+        expect(rarity).to.equal(ITEMS[i][0]);
+        expect(maxSupply).to.eq(RARITIES_OBJECT[ITEMS[i][0].toString()].value);
+        expect(totalSupply).to.eq(0);
+        expect(price).to.eq(ITEMS[i][1]);
+        expect(beneficiary.toLowerCase()).to.eq(
+          ITEMS[i][2].toString().toLowerCase()
+        );
+        expect(metadata).to.equal(ITEMS[i][3]);
+        expect(contentHash).to.equal("");
+      }
+    });
 
     // it('should create a collection by paying the fees in acceptedToken', async function () {
     //   await raritiesContract.updatePrices(
