@@ -1,4 +1,4 @@
-import { BigNumberish, ethers } from "ethers";
+import { BigNumberish, ethers, BigNumber } from "ethers";
 import { ether } from "./Utils";
 
 interface RARITY {
@@ -6,7 +6,7 @@ interface RARITY {
   maxSupply: BigNumberish;
   price: BigNumberish;
 }
-const DEFAULT_RARITY_PRICE = "100000000000000000000" as BigNumberish; // 100 UCC
+export const DEFAULT_RARITY_PRICE = BigNumber.from("100000000000000000000"); // 100 UCC
 
 const RARITIES: RARITY[] = [
   { name: "common", maxSupply: 100000, price: DEFAULT_RARITY_PRICE },
@@ -34,6 +34,10 @@ export const getInitialRarities = () => {
 
 export const getRarityNames = () => {
   return Object.keys(RARITIES_OBJECT);
+};
+
+export const getRarityDefaulPrices = () => {
+  return Object.keys(RARITIES).map((_) => DEFAULT_RARITY_PRICE);
 };
 
 export const EMPTY_HASH =

@@ -16,8 +16,11 @@ import {
   genRanHex,
   ITEMS,
   RARITIES_OBJECT,
+  getRarityDefaulPrices,
+  DEFAULT_RARITY_PRICE,
 } from "./helper/Collection";
 import { hexlify, zeroPad } from "ethers/lib/utils";
+import { balanceSnap } from "./helper/BalanceSnap";
 
 describe("CollectionManager", function () {
   let UccContract,
@@ -132,246 +135,246 @@ describe("CollectionManager", function () {
     // console.log("Factory", factoryContract.address);
     // console.log("================================================");
   });
-  // describe("create collection manager", function () {
-  //   it("deploy with correct values", async function () {
-  //     const contract = await CollectionManagerContract.deploy(
-  //       ownerAddr,
-  //       uccContract.address,
-  //       committeeContract.address,
-  //       collectorAddr,
-  //       raritiesContract.address,
-  //       [SET_APPROVE_COLLECTION_SELECTOR],
-  //       [true]
-  //     );
+  describe("create collection manager", function () {
+    it("deploy with correct values", async function () {
+      const contract = await CollectionManagerContract.deploy(
+        ownerAddr,
+        uccContract.address,
+        committeeContract.address,
+        collectorAddr,
+        raritiesContract.address,
+        [SET_APPROVE_COLLECTION_SELECTOR],
+        [true]
+      );
 
-  //     const collectionManagerOwner = await contract.owner();
-  //     const ucc = await contract.acceptedToken();
-  //     const committee = await contract.committee();
-  //     const isAllowed = await contract.allowedCommitteeMethods(
-  //       SET_APPROVE_COLLECTION_SELECTOR
-  //     );
-  //     const feesCollector = await contract.feesCollector();
-  //     const rarities = await contract.rarities();
+      const collectionManagerOwner = await contract.owner();
+      const ucc = await contract.acceptedToken();
+      const committee = await contract.committee();
+      const isAllowed = await contract.allowedCommitteeMethods(
+        SET_APPROVE_COLLECTION_SELECTOR
+      );
+      const feesCollector = await contract.feesCollector();
+      const rarities = await contract.rarities();
 
-  //     expect(collectionManagerOwner).to.equal(ownerAddr);
-  //     expect(ucc).to.equal(uccContract.address);
-  //     expect(committee).to.equal(committeeContract.address);
-  //     expect(isAllowed).to.equal(true);
-  //     expect(feesCollector).to.equal(collectorAddr);
-  //     expect(rarities).to.equal(raritiesContract.address);
-  //   });
-  // });
-  // describe("setAcceptedToken", async function () {
-  //   it("should set acceptedToken", async function () {
-  //     let acceptedToken = await collectionManagerContract.acceptedToken();
-  //     expect(acceptedToken).to.equal(uccContract.address);
+      expect(collectionManagerOwner).to.equal(ownerAddr);
+      expect(ucc).to.equal(uccContract.address);
+      expect(committee).to.equal(committeeContract.address);
+      expect(isAllowed).to.equal(true);
+      expect(feesCollector).to.equal(collectorAddr);
+      expect(rarities).to.equal(raritiesContract.address);
+    });
+  });
+  describe("setAcceptedToken", async function () {
+    it("should set acceptedToken", async function () {
+      let acceptedToken = await collectionManagerContract.acceptedToken();
+      expect(acceptedToken).to.equal(uccContract.address);
 
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setAcceptedToken(userAddr)
-  //     )
-  //       .to.emit(collectionManagerContract, "AcceptedTokenSet")
-  //       .withArgs(uccContract.address, userAddr);
+      await expect(
+        collectionManagerContract.connect(owner).setAcceptedToken(userAddr)
+      )
+        .to.emit(collectionManagerContract, "AcceptedTokenSet")
+        .withArgs(uccContract.address, userAddr);
 
-  //     expect(await collectionManagerContract.acceptedToken()).to.eq(userAddr);
+      expect(await collectionManagerContract.acceptedToken()).to.eq(userAddr);
 
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(owner)
-  //         .setAcceptedToken(uccContract.address)
-  //     )
-  //       .to.emit(collectionManagerContract, "AcceptedTokenSet")
-  //       .withArgs(userAddr, uccContract.address);
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .setAcceptedToken(uccContract.address)
+      )
+        .to.emit(collectionManagerContract, "AcceptedTokenSet")
+        .withArgs(userAddr, uccContract.address);
 
-  //     expect(await collectionManagerContract.acceptedToken()).to.eq(
-  //       uccContract.address
-  //     );
-  //   });
+      expect(await collectionManagerContract.acceptedToken()).to.eq(
+        uccContract.address
+      );
+    });
 
-  //   it("reverts when trying to set the ZERO_ADDRESS as the acceptedToken", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setAcceptedToken(ZERO_ADDRESS)
-  //     ).to.be.reverted;
-  //   });
+    it("reverts when trying to set the ZERO_ADDRESS as the acceptedToken", async function () {
+      await expect(
+        collectionManagerContract.connect(owner).setAcceptedToken(ZERO_ADDRESS)
+      ).to.be.reverted;
+    });
 
-  //   it("reverts when trying to set a acceptedToken by hacker", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(hacker).setAcceptedToken(userAddr)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-  // });
-  // describe("setCommittee", async function () {
-  //   it("should set committee", async function () {
-  //     let committee = await collectionManagerContract.committee();
-  //     expect(committee).to.equal(committeeContract.address);
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setCommittee(userAddr)
-  //     )
-  //       .to.emit(collectionManagerContract, "CommitteeSet")
-  //       .withArgs(committeeContract.address, userAddr);
-  //     committee = await collectionManagerContract.committee();
-  //     expect(committee).to.equal(userAddr);
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(owner)
-  //         .setCommittee(committeeContract.address)
-  //     )
-  //       .to.emit(collectionManagerContract, "CommitteeSet")
-  //       .withArgs(userAddr, committeeContract.address);
-  //     committee = await collectionManagerContract.committee();
-  //     expect(committee).to.equal(committeeContract.address);
-  //   });
+    it("reverts when trying to set a acceptedToken by hacker", async function () {
+      await expect(
+        collectionManagerContract.connect(hacker).setAcceptedToken(userAddr)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+  describe("setCommittee", async function () {
+    it("should set committee", async function () {
+      let committee = await collectionManagerContract.committee();
+      expect(committee).to.equal(committeeContract.address);
+      await expect(
+        collectionManagerContract.connect(owner).setCommittee(userAddr)
+      )
+        .to.emit(collectionManagerContract, "CommitteeSet")
+        .withArgs(committeeContract.address, userAddr);
+      committee = await collectionManagerContract.committee();
+      expect(committee).to.equal(userAddr);
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .setCommittee(committeeContract.address)
+      )
+        .to.emit(collectionManagerContract, "CommitteeSet")
+        .withArgs(userAddr, committeeContract.address);
+      committee = await collectionManagerContract.committee();
+      expect(committee).to.equal(committeeContract.address);
+    });
 
-  //   it("reverts when trying to set the ZERO_ADDRESS as the committee", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setCommittee(ZERO_ADDRESS)
-  //     ).to.be.revertedWith("CollectionManager#setCommittee: INVALID_COMMITTEE");
-  //   });
+    it("reverts when trying to set the ZERO_ADDRESS as the committee", async function () {
+      await expect(
+        collectionManagerContract.connect(owner).setCommittee(ZERO_ADDRESS)
+      ).to.be.revertedWith("CollectionManager#setCommittee: INVALID_COMMITTEE");
+    });
 
-  //   it("reverts when trying to set a committee by hacker", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(hacker).setCommittee(ZERO_ADDRESS)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-  // });
-  // describe("setCommitteeMethods", async function () {
-  //   const methodSelector1 = "0x12345678";
-  //   const methodSelector2 = "0x12345679";
+    it("reverts when trying to set a committee by hacker", async function () {
+      await expect(
+        collectionManagerContract.connect(hacker).setCommittee(ZERO_ADDRESS)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+  describe("setCommitteeMethods", async function () {
+    const methodSelector1 = "0x12345678";
+    const methodSelector2 = "0x12345679";
 
-  //   it("should set committee methods", async function () {
-  //     let isAllowd = await collectionManagerContract.allowedCommitteeMethods(
-  //       methodSelector1
-  //     );
-  //     expect(isAllowd).to.equal(false);
-  //     isAllowd = await collectionManagerContract.allowedCommitteeMethods(
-  //       methodSelector2
-  //     );
-  //     expect(isAllowd).to.equal(false);
+    it("should set committee methods", async function () {
+      let isAllowd = await collectionManagerContract.allowedCommitteeMethods(
+        methodSelector1
+      );
+      expect(isAllowd).to.equal(false);
+      isAllowd = await collectionManagerContract.allowedCommitteeMethods(
+        methodSelector2
+      );
+      expect(isAllowd).to.equal(false);
 
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(owner)
-  //         .setCommitteeMethods([methodSelector1, methodSelector2], [true, true])
-  //     )
-  //       .to.emit(collectionManagerContract, "CommitteeMethodSet")
-  //       .withArgs(methodSelector1, true)
-  //       .to.emit(collectionManagerContract, "CommitteeMethodSet")
-  //       .withArgs(methodSelector2, true);
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .setCommitteeMethods([methodSelector1, methodSelector2], [true, true])
+      )
+        .to.emit(collectionManagerContract, "CommitteeMethodSet")
+        .withArgs(methodSelector1, true)
+        .to.emit(collectionManagerContract, "CommitteeMethodSet")
+        .withArgs(methodSelector2, true);
 
-  //     isAllowd = await collectionManagerContract.allowedCommitteeMethods(
-  //       methodSelector1
-  //     );
-  //     expect(isAllowd).to.equal(true);
-  //     isAllowd = await collectionManagerContract.allowedCommitteeMethods(
-  //       methodSelector2
-  //     );
-  //     expect(isAllowd).to.equal(true);
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(owner)
-  //         .setCommitteeMethods([methodSelector2], [false])
-  //     )
-  //       .to.emit(collectionManagerContract, "CommitteeMethodSet")
-  //       .withArgs(methodSelector2, false);
-  //   });
+      isAllowd = await collectionManagerContract.allowedCommitteeMethods(
+        methodSelector1
+      );
+      expect(isAllowd).to.equal(true);
+      isAllowd = await collectionManagerContract.allowedCommitteeMethods(
+        methodSelector2
+      );
+      expect(isAllowd).to.equal(true);
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .setCommitteeMethods([methodSelector2], [false])
+      )
+        .to.emit(collectionManagerContract, "CommitteeMethodSet")
+        .withArgs(methodSelector2, false);
+    });
 
-  //   it("reverts when trying to set methods with invalid length", async function () {
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(owner)
-  //         .setCommitteeMethods([methodSelector1], [true, false])
-  //     ).to.be.revertedWith(
-  //       "CollectionManager#setCommitteeMethods: EMPTY_METHODS"
-  //     );
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(owner)
-  //         .setCommitteeMethods([methodSelector1, methodSelector2], [true])
-  //     ).to.be.revertedWith(
-  //       "CollectionManager#setCommitteeMethods: EMPTY_METHODS"
-  //     );
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setCommitteeMethods([], [])
-  //     ).to.be.revertedWith(
-  //       "CollectionManager#setCommitteeMethods: EMPTY_METHODS"
-  //     );
-  //   });
+    it("reverts when trying to set methods with invalid length", async function () {
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .setCommitteeMethods([methodSelector1], [true, false])
+      ).to.be.revertedWith(
+        "CollectionManager#setCommitteeMethods: EMPTY_METHODS"
+      );
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .setCommitteeMethods([methodSelector1, methodSelector2], [true])
+      ).to.be.revertedWith(
+        "CollectionManager#setCommitteeMethods: EMPTY_METHODS"
+      );
+      await expect(
+        collectionManagerContract.connect(owner).setCommitteeMethods([], [])
+      ).to.be.revertedWith(
+        "CollectionManager#setCommitteeMethods: EMPTY_METHODS"
+      );
+    });
 
-  //   it("reverts when trying to set a committee by hacker", async function () {
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(hacker)
-  //         .setCommitteeMethods([methodSelector2], [true])
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-  // });
-  // describe("setFeesCollector", async function () {
-  //   it("should set feesCollector", async function () {
-  //     let feesCollector = await collectionManagerContract.feesCollector();
-  //     expect(feesCollector).to.equal(collectorAddr);
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setFeesCollector(userAddr)
-  //     )
-  //       .to.emit(collectionManagerContract, "FeesCollectorSet")
-  //       .withArgs(collectorAddr, userAddr);
-  //     feesCollector = await collectionManagerContract.feesCollector();
-  //     expect(feesCollector).to.equal(userAddr);
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setFeesCollector(collectorAddr)
-  //     )
-  //       .to.emit(collectionManagerContract, "FeesCollectorSet")
-  //       .withArgs(userAddr, collectorAddr);
-  //     feesCollector = await collectionManagerContract.feesCollector();
-  //     expect(feesCollector).to.equal(collectorAddr);
-  //   });
+    it("reverts when trying to set a committee by hacker", async function () {
+      await expect(
+        collectionManagerContract
+          .connect(hacker)
+          .setCommitteeMethods([methodSelector2], [true])
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+  describe("setFeesCollector", async function () {
+    it("should set feesCollector", async function () {
+      let feesCollector = await collectionManagerContract.feesCollector();
+      expect(feesCollector).to.equal(collectorAddr);
+      await expect(
+        collectionManagerContract.connect(owner).setFeesCollector(userAddr)
+      )
+        .to.emit(collectionManagerContract, "FeesCollectorSet")
+        .withArgs(collectorAddr, userAddr);
+      feesCollector = await collectionManagerContract.feesCollector();
+      expect(feesCollector).to.equal(userAddr);
+      await expect(
+        collectionManagerContract.connect(owner).setFeesCollector(collectorAddr)
+      )
+        .to.emit(collectionManagerContract, "FeesCollectorSet")
+        .withArgs(userAddr, collectorAddr);
+      feesCollector = await collectionManagerContract.feesCollector();
+      expect(feesCollector).to.equal(collectorAddr);
+    });
 
-  //   it("reverts when trying to set the ZERO_ADDRESS as the feesCollector", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setFeesCollector(ZERO_ADDRESS)
-  //     ).to.be.revertedWith(
-  //       "CollectionManager#setFeesCollector: INVALID_FEES_COLLECTOR"
-  //     );
-  //   });
+    it("reverts when trying to set the ZERO_ADDRESS as the feesCollector", async function () {
+      await expect(
+        collectionManagerContract.connect(owner).setFeesCollector(ZERO_ADDRESS)
+      ).to.be.revertedWith(
+        "CollectionManager#setFeesCollector: INVALID_FEES_COLLECTOR"
+      );
+    });
 
-  //   it("reverts when trying to set a feesCollector by hacker", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(hacker).setFeesCollector(userAddr)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-  // });
-  // describe("setRarities", async function () {
-  //   it("should set rarities", async function () {
-  //     let rarities = await collectionManagerContract.rarities();
-  //     expect(rarities).to.equal(raritiesContract.address);
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setRarities(userAddr)
-  //     )
-  //       .to.emit(collectionManagerContract, "RaritiesSet")
-  //       .withArgs(raritiesContract.address, userAddr);
-  //     rarities = await collectionManagerContract.rarities();
-  //     expect(rarities).to.equal(userAddr);
-  //     await expect(
-  //       collectionManagerContract
-  //         .connect(owner)
-  //         .setRarities(raritiesContract.address)
-  //     )
-  //       .to.emit(collectionManagerContract, "RaritiesSet")
-  //       .withArgs(userAddr, raritiesContract.address);
-  //     rarities = await collectionManagerContract.rarities();
-  //     expect(rarities).to.equal(raritiesContract.address);
-  //   });
+    it("reverts when trying to set a feesCollector by hacker", async function () {
+      await expect(
+        collectionManagerContract.connect(hacker).setFeesCollector(userAddr)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+  describe("setRarities", async function () {
+    it("should set rarities", async function () {
+      let rarities = await collectionManagerContract.rarities();
+      expect(rarities).to.equal(raritiesContract.address);
+      await expect(
+        collectionManagerContract.connect(owner).setRarities(userAddr)
+      )
+        .to.emit(collectionManagerContract, "RaritiesSet")
+        .withArgs(raritiesContract.address, userAddr);
+      rarities = await collectionManagerContract.rarities();
+      expect(rarities).to.equal(userAddr);
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .setRarities(raritiesContract.address)
+      )
+        .to.emit(collectionManagerContract, "RaritiesSet")
+        .withArgs(userAddr, raritiesContract.address);
+      rarities = await collectionManagerContract.rarities();
+      expect(rarities).to.equal(raritiesContract.address);
+    });
 
-  //   it("reverts when trying to set the ZERO_ADDRESS as the rarities", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(owner).setRarities(ZERO_ADDRESS)
-  //     ).to.be.revertedWith("CollectionManager#setRarities: INVALID_RARITIES");
-  //   });
+    it("reverts when trying to set the ZERO_ADDRESS as the rarities", async function () {
+      await expect(
+        collectionManagerContract.connect(owner).setRarities(ZERO_ADDRESS)
+      ).to.be.revertedWith("CollectionManager#setRarities: INVALID_RARITIES");
+    });
 
-  //   it("reverts when trying to set a rarities by hacker", async function () {
-  //     await expect(
-  //       collectionManagerContract.connect(hacker).setRarities(userAddr)
-  //     ).to.be.revertedWith("Ownable: caller is not the owner");
-  //   });
-  // });
+    it("reverts when trying to set a rarities by hacker", async function () {
+      await expect(
+        collectionManagerContract.connect(hacker).setRarities(userAddr)
+      ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
   describe("createCollection", async function () {
     const name = "collectionName";
     const symbol = "collectionSymbol";
@@ -575,93 +578,86 @@ describe("CollectionManager", function () {
       }
     });
 
-    // it('should create a collection by paying the fees in acceptedToken', async function () {
-    //   await raritiesContract.updatePrices(
-    //     getRarityNames(),
-    //     getRarityDefaulPrices()
-    //   )
+    it("should create a collection by paying the fees in acceptedToken", async function () {
+      await raritiesContract
+        .connect(owner)
+        .updatePrices(getRarityNames(), getRarityDefaulPrices());
 
-    //   const fee = web3.utils
-    //     .toBN(DEFAULT_RARITY_PRICE)
-    //     .mul(web3.utils.toBN(ITEMS.length))
+      const fee = DEFAULT_RARITY_PRICE.mul(BigNumber.from(ITEMS.length));
 
-    //   await manaContract.approve(
-    //     collectionManagerContract.address,
-    //     fee,
-    //     fromUser
-    //   )
+      await uccContract
+        .connect(user)
+        .approve(collectionManagerContract.address, fee);
+      await uccContract.mint(userAddr, fee);
+      expect(await uccContract.balanceOf(userAddr)).to.equal(fee);
 
-    //   const creatorBalance = await balanceSnap(manaContract, user, 'creator')
-    //   const feeCollectorBalance = await balanceSnap(
-    //     manaContract,
-    //     collector,
-    //     'feeCollector'
-    //   )
+      const creatorBalance = await balanceSnap(
+        uccContract,
+        userAddr,
+        "creator"
+      );
+      const feeCollectorBalance = await balanceSnap(
+        uccContract,
+        collectorAddr,
+        "feeCollector"
+      );
 
-    //   const salt = web3.utils.randomHex(32)
-    //   const { logs } = await collectionManagerContract.createCollection(
-    //     forwarderContract.address,
-    //     factoryContract.address,
-    //     salt,
-    //     name,
-    //     symbol,
-    //     baseURI,
-    //     anotherUser,
-    //     ITEMS,
-    //     fromUser
-    //   )
-    //   collectionContract = await ERC721CollectionV2.at(logs[0].address)
+      const salt = "0x" + genRanHex(64);
+      let createCollectionTx = await collectionManagerContract
+        .connect(user)
+        .createCollection(
+          forwarderContract.address,
+          factoryContract.address,
+          salt,
+          name,
+          symbol,
+          baseURI,
+          anotherUserAddr,
+          ITEMS
+        );
+      let logs = (await createCollectionTx.wait()).events;
+      const collectionContractAddress = logs[3].address;
+      collectionContract = await ethers.getContractAt(
+        "ERC721Collection",
+        collectionContractAddress
+      );
+      expect(logs[3].address).to.not.be.equal(ZERO_ADDRESS);
+      expect(await collectionContract.name()).to.equal(name);
+      expect(await collectionContract.symbol()).to.equal(symbol);
+      expect(await collectionContract.baseURI()).to.equal(baseURI);
+      expect(await collectionContract.creator()).to.equal(anotherUserAddr);
+      expect(await collectionContract.isApproved()).to.equal(false);
+      expect(await collectionContract.isCompleted()).to.equal(true);
+      expect(await collectionContract.rarities()).to.equal(
+        raritiesContract.address
+      );
+      expect(await collectionContract.itemsCount()).to.equal(ITEMS.length);
 
-    //   expect(logs[0].address).to.not.be.equal(ZERO_ADDRESS)
+      for (let i = 0; i < ITEMS.length; i++) {
+        const {
+          rarity,
+          maxSupply,
+          totalSupply,
+          price,
+          beneficiary,
+          metadata,
+          contentHash,
+        } = await collectionContract.items(i);
 
-    //   const name_ = await collectionContract.name()
-    //   expect(name_).to.be.equal(name)
+        expect(rarity).to.equal(ITEMS[i][0]);
+        expect(maxSupply).to.eq(RARITIES_OBJECT[ITEMS[i][0].toString()].value);
+        expect(totalSupply).to.eq(0);
+        expect(price).to.eq(ITEMS[i][1]);
+        expect(beneficiary.toLowerCase()).to.eq(
+          ITEMS[i][2].toString().toLowerCase()
+        );
+        expect(metadata).to.equal(ITEMS[i][3]);
+        expect(contentHash).to.equal("");
+      }
 
-    //   const symbol_ = await collectionContract.symbol()
-    //   expect(symbol_).to.be.equal(symbol)
-
-    //   const baseURI_ = await collectionContract.baseURI()
-    //   expect(baseURI_).to.be.equal(baseURI)
-
-    //   const creator_ = await collectionContract.creator()
-    //   expect(creator_).to.be.equal(anotherUser)
-
-    //   const isApproved = await collectionContract.isApproved()
-    //   expect(isApproved).to.be.equal(false)
-
-    //   const isCompleted = await collectionContract.isCompleted()
-    //   expect(isCompleted).to.be.equal(true)
-
-    //   const rarities = await collectionContract.rarities()
-    //   expect(rarities).to.be.equal(raritiesContract.address)
-
-    //   const itemLength = await collectionContract.itemsCount()
-
-    //   expect(ITEMS.length).to.be.eq.BN(itemLength)
-
-    //   for (let i = 0; i < ITEMS.length; i++) {
-    //     const {
-    //       rarity,
-    //       maxSupply,
-    //       totalSupply,
-    //       price,
-    //       beneficiary,
-    //       metadata,
-    //       contentHash,
-    //     } = await collectionContract.items(i)
-
-    //     expect(rarity).to.be.equal(ITEMS[i][0])
-    //     expect(maxSupply).to.be.eq.BN(RARITIES[ITEMS[i][0]].value)
-    //     expect(totalSupply).to.be.eq.BN(0)
-    //     expect(price).to.be.eq.BN(ITEMS[i][1])
-    //     expect(beneficiary.toLowerCase()).to.be.equal(ITEMS[i][2].toLowerCase())
-    //     expect(metadata).to.be.equal(ITEMS[i][3])
-    //     expect(contentHash).to.be.equal('')
-    //   }
-
-    //   await creatorBalance.requireDecrease(fee)
-    //   await feeCollectorBalance.requireIncrease(fee)
-    // })
+      await creatorBalance.requireDecrease(fee);
+      await feeCollectorBalance.requireIncrease(fee);
+    });
 
     // it('should create a collection by paying the fees in acceptedToken :: Relayed EIP721', async function () {
     //   await raritiesContract.updatePrices(
