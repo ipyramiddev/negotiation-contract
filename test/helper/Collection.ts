@@ -108,3 +108,6 @@ export const ITEMS = [
     "1:tropical_mask:hat:female,male",
   ],
 ];
+export const MAX_UINT256 = BigNumber.from(
+  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+);

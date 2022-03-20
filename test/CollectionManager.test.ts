@@ -18,9 +18,11 @@ import {
   RARITIES_OBJECT,
   getRarityDefaulPrices,
   DEFAULT_RARITY_PRICE,
+  MAX_UINT256,
 } from "./helper/Collection";
 import { hexlify, zeroPad } from "ethers/lib/utils";
 import { balanceSnap } from "./helper/BalanceSnap";
+import { ERC721Collection } from "../typechain";
 
 describe("CollectionManager", function () {
   let UccContract,
@@ -659,362 +661,763 @@ describe("CollectionManager", function () {
       await feeCollectorBalance.requireIncrease(fee);
     });
 
-    // it('should create a collection by paying the fees in acceptedToken :: Relayed EIP721', async function () {
-    //   await raritiesContract.updatePrices(
-    //     getRarityNames(),
-    //     getRarityDefaulPrices()
-    //   )
+    it("should create a collection by paying the fees in acceptedToken :: Relayed EIP721", async function () {
+      await raritiesContract
+        .connect(owner)
+        .updatePrices(getRarityNames(), getRarityDefaulPrices());
 
-    //   const fee = web3.utils
-    //     .toBN(DEFAULT_RARITY_PRICE)
-    //     .mul(web3.utils.toBN(ITEMS.length))
+      const fee = DEFAULT_RARITY_PRICE.mul(BigNumber.from(ITEMS.length));
 
-    //   await manaContract.approve(
-    //     collectionManagerContract.address,
-    //     fee,
-    //     fromUser
-    //   )
+      await uccContract
+        .connect(user)
+        .approve(collectionManagerContract.address, fee);
+      await uccContract.mint(userAddr, fee);
+      expect(await uccContract.balanceOf(userAddr)).to.equal(fee);
 
-    //   const creatorBalance = await balanceSnap(manaContract, user, 'creator')
-    //   const feeCollectorBalance = await balanceSnap(
-    //     manaContract,
-    //     collector,
-    //     'feeCollector'
-    //   )
+      const creatorBalance = await balanceSnap(
+        uccContract,
+        userAddr,
+        "creator"
+      );
+      const feeCollectorBalance = await balanceSnap(
+        uccContract,
+        collectorAddr,
+        "feeCollector"
+      );
 
-    //   const salt = web3.utils.randomHex(32)
-    //   const functionSignature = web3.eth.abi.encodeFunctionCall(
-    //     {
-    //       inputs: [
-    //         {
-    //           internalType: 'contract IForwarder',
-    //           name: '_forwarder',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'contract IERC721CollectionFactoryV2',
-    //           name: '_factory',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'bytes32',
-    //           name: '_salt',
-    //           type: 'bytes32',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_name',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_symbol',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_baseURI',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'address',
-    //           name: '_creator',
-    //           type: 'address',
-    //         },
-    //         {
-    //           components: [
-    //             {
-    //               internalType: 'string',
-    //               name: 'rarity',
-    //               type: 'string',
-    //             },
-    //             {
-    //               internalType: 'uint256',
-    //               name: 'price',
-    //               type: 'uint256',
-    //             },
-    //             {
-    //               internalType: 'address',
-    //               name: 'beneficiary',
-    //               type: 'address',
-    //             },
-    //             {
-    //               internalType: 'string',
-    //               name: 'metadata',
-    //               type: 'string',
-    //             },
-    //           ],
-    //           internalType: 'struct IERC721CollectionV2.ItemParam[]',
-    //           name: '_items',
-    //           type: 'tuple[]',
-    //         },
-    //       ],
-    //       name: 'createCollection',
-    //       outputs: [],
-    //       stateMutability: 'nonpayable',
-    //       type: 'function',
-    //     },
-    //     [
-    //       forwarderContract.address,
-    //       factoryContract.address,
-    //       salt,
-    //       name,
-    //       symbol,
-    //       baseURI,
-    //       anotherUser,
-    //       ITEMS,
-    //     ]
-    //   )
+      const salt = "0x" + genRanHex(64);
+      const createCollectionABI = [
+        {
+          inputs: [
+            {
+              internalType: "contract IForwarder",
+              name: "_forwarder",
+              type: "address",
+            },
+            {
+              internalType: "contract IERC721CollectionFactory",
+              name: "_factory",
+              type: "address",
+            },
+            {
+              internalType: "bytes32",
+              name: "_salt",
+              type: "bytes32",
+            },
+            {
+              internalType: "string",
+              name: "_name",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_symbol",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_baseURI",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "_creator",
+              type: "address",
+            },
+            {
+              components: [
+                {
+                  internalType: "string",
+                  name: "rarity",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "price",
+                  type: "uint256",
+                },
+                {
+                  internalType: "address",
+                  name: "beneficiary",
+                  type: "address",
+                },
+                {
+                  internalType: "string",
+                  name: "metadata",
+                  type: "string",
+                },
+              ],
+              internalType: "struct IERC721Collection.ItemParam[]",
+              name: "_items",
+              type: "tuple[]",
+            },
+          ],
+          name: "createCollection",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ];
+      let iface = new ethers.utils.Interface(createCollectionABI);
+      const functionSignature = iface.encodeFunctionData("createCollection", [
+        forwarderContract.address,
+        factoryContract.address,
+        salt,
+        name,
+        symbol,
+        baseURI,
+        userAddr,
+        ITEMS,
+      ]);
+      let createCollectionTx = await sendMetaTx(
+        collectionManagerContract,
+        functionSignature,
+        userAddr,
+        relayer,
+        null,
+        "Unicial Collection Manager",
+        "1"
+      );
+      let logs = (await createCollectionTx.wait()).events;
+      const collectionContractAddress = logs[4].address;
+      collectionContract = await ethers.getContractAt(
+        "ERC721Collection",
+        collectionContractAddress
+      );
 
-    //   const res = await sendMetaTx(
-    //     collectionManagerContract,
-    //     functionSignature,
-    //     user,
-    //     relayer,
-    //     null,
-    //     'Decentraland Collection Manager',
-    //     '1'
-    //   )
+      expect(logs[4].address).to.not.be.equal(ZERO_ADDRESS);
+      expect(await collectionContract.name()).to.equal(name);
+      expect(await collectionContract.symbol()).to.equal(symbol);
+      expect(await collectionContract.baseURI()).to.equal(baseURI);
+      expect(await collectionContract.creator()).to.equal(userAddr);
+      expect(await collectionContract.isApproved()).to.equal(false);
+      expect(await collectionContract.isCompleted()).to.equal(true);
+      expect(await collectionContract.rarities()).to.equal(
+        raritiesContract.address
+      );
+      expect(await collectionContract.itemsCount()).to.equal(ITEMS.length);
 
-    //   console.log(
-    //     `Deploy a collection with ${ITEMS.length} items -> Gas Used: ${res.receipt.gasUsed}`
-    //   )
-    //   const logs = res.logs
+      for (let i = 0; i < ITEMS.length; i++) {
+        const {
+          rarity,
+          maxSupply,
+          totalSupply,
+          price,
+          beneficiary,
+          metadata,
+          contentHash,
+        } = await collectionContract.items(i);
 
-    //   collectionContract = await ERC721CollectionV2.at(logs[1].address)
+        expect(rarity).to.equal(ITEMS[i][0]);
+        expect(maxSupply).to.eq(RARITIES_OBJECT[ITEMS[i][0].toString()].value);
+        expect(totalSupply).to.eq(0);
+        expect(price).to.eq(ITEMS[i][1]);
+        expect(beneficiary.toLowerCase()).to.eq(
+          ITEMS[i][2].toString().toLowerCase()
+        );
+        expect(metadata).to.equal(ITEMS[i][3]);
+        expect(contentHash).to.equal("");
+      }
 
-    //   expect(logs[1].address).to.not.be.equal(ZERO_ADDRESS)
+      await creatorBalance.requireDecrease(fee);
+      await feeCollectorBalance.requireIncrease(fee);
+    });
 
-    //   const name_ = await collectionContract.name()
-    //   expect(name_).to.be.equal(name)
+    it("should create a collection by paying the fees in acceptedToken :: Relayed EIP721 :: Gas estimation", async function () {
+      this.timeout(100000);
+      await raritiesContract.connect(owner).updatePrices(
+        getRarityNames(),
+        getRarityDefaulPrices().map((_) => 1)
+      );
+      const itemsInTheSameTx = 55;
+      const items = [];
+      await uccContract
+        .connect(user)
+        .approve(collectionManagerContract.address, MAX_UINT256);
+      const fee = DEFAULT_RARITY_PRICE.mul(BigNumber.from(itemsInTheSameTx));
+      await uccContract.mint(userAddr, fee);
 
-    //   const symbol_ = await collectionContract.symbol()
-    //   expect(symbol_).to.be.equal(symbol)
+      for (let i = 0; i < itemsInTheSameTx; i++) {
+        items.push(ITEMS[i % ITEMS.length]);
+      }
 
-    //   const baseURI_ = await collectionContract.baseURI()
-    //   expect(baseURI_).to.be.equal(baseURI)
+      const salt = "0x" + genRanHex(64);
+      const createCollectionABI = [
+        {
+          inputs: [
+            {
+              internalType: "contract IForwarder",
+              name: "_forwarder",
+              type: "address",
+            },
+            {
+              internalType: "contract IERC721CollectionFactory",
+              name: "_factory",
+              type: "address",
+            },
+            {
+              internalType: "bytes32",
+              name: "_salt",
+              type: "bytes32",
+            },
+            {
+              internalType: "string",
+              name: "_name",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_symbol",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_baseURI",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "_creator",
+              type: "address",
+            },
+            {
+              components: [
+                {
+                  internalType: "string",
+                  name: "rarity",
+                  type: "string",
+                },
+                {
+                  internalType: "uint256",
+                  name: "price",
+                  type: "uint256",
+                },
+                {
+                  internalType: "address",
+                  name: "beneficiary",
+                  type: "address",
+                },
+                {
+                  internalType: "string",
+                  name: "metadata",
+                  type: "string",
+                },
+              ],
+              internalType: "struct IERC721Collection.ItemParam[]",
+              name: "_items",
+              type: "tuple[]",
+            },
+          ],
+          name: "createCollection",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ];
+      let iface = new ethers.utils.Interface(createCollectionABI);
+      const functionSignature = iface.encodeFunctionData("createCollection", [
+        forwarderContract.address,
+        factoryContract.address,
+        salt,
+        name,
+        symbol,
+        baseURI,
+        userAddr,
+        ITEMS,
+      ]);
+      let createCollectionTx = await sendMetaTx(
+        collectionManagerContract,
+        functionSignature,
+        userAddr,
+        relayer,
+        null,
+        "Unicial Collection Manager",
+        "1"
+      );
+      let res = await createCollectionTx.wait();
+      console.log(
+        `Deploy a collection with ${itemsInTheSameTx} items -> Gas Used: ${res.gasUsed}`
+      );
+    });
 
-    //   const creator_ = await collectionContract.creator()
-    //   expect(creator_).to.be.equal(anotherUser)
+    it("reverts when creating a collection without paying the fees in acceptedToken", async function () {
+      await raritiesContract
+        .connect(owner)
+        .updatePrices(getRarityNames(), getRarityDefaulPrices());
 
-    //   const isApproved = await collectionContract.isApproved()
-    //   expect(isApproved).to.be.equal(false)
+      const salt = "0x" + genRanHex(64);
 
-    //   const isCompleted = await collectionContract.isCompleted()
-    //   expect(isCompleted).to.be.equal(true)
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .createCollection(
+            forwarderContract.address,
+            factoryContract.address,
+            salt,
+            name,
+            symbol,
+            baseURI,
+            user,
+            ITEMS
+          )
+      ).to.be.reverted;
 
-    //   const rarities = await collectionContract.rarities()
-    //   expect(rarities).to.be.equal(raritiesContract.address)
+      const fee = DEFAULT_RARITY_PRICE.mul(BigNumber.from(ITEMS.length));
+      await uccContract.mint(userAddr, fee);
 
-    //   const itemLength = await collectionContract.itemsCount()
+      await uccContract
+        .connect(user)
+        .approve(collectionManagerContract.address, fee.sub(1));
 
-    //   expect(ITEMS.length).to.be.eq.BN(itemLength)
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .createCollection(
+            forwarderContract.address,
+            factoryContract.address,
+            salt,
+            name,
+            symbol,
+            baseURI,
+            user,
+            ITEMS
+          )
+      ).to.be.reverted;
+    });
 
-    //   for (let i = 0; i < ITEMS.length; i++) {
-    //     const {
-    //       rarity,
-    //       maxSupply,
-    //       totalSupply,
-    //       price,
-    //       beneficiary,
-    //       metadata,
-    //       contentHash,
-    //     } = await collectionContract.items(i)
+    it("reverts when forwarder is the contract", async function () {
+      const salt = "0x" + genRanHex(64);
 
-    //     expect(rarity).to.be.equal(ITEMS[i][0])
-    //     expect(maxSupply).to.be.eq.BN(RARITIES[ITEMS[i][0]].value)
-    //     expect(totalSupply).to.be.eq.BN(0)
-    //     expect(price).to.be.eq.BN(ITEMS[i][1])
-    //     expect(beneficiary.toLowerCase()).to.be.equal(ITEMS[i][2].toLowerCase())
-    //     expect(metadata).to.be.equal(ITEMS[i][3])
-    //     expect(contentHash).to.be.equal('')
-    //   }
+      await expect(
+        collectionManagerContract
+          .connect(user)
+          .createCollection(
+            collectionManagerContract.address,
+            factoryContract.address,
+            salt,
+            name,
+            symbol,
+            baseURI,
+            anotherUserAddr,
+            ITEMS
+          )
+      ).to.be.revertedWith(
+        "CollectionManager#createCollection: FORWARDER_CANT_BE_THIS"
+      );
+    });
+  });
+  describe("manageCollection", async function () {
+    const name = "collectionName";
+    const symbol = "collectionSymbol";
+    const baseURI = "collectionBaseURI";
 
-    //   await creatorBalance.requireDecrease(fee)
-    //   await feeCollectorBalance.requireIncrease(fee)
-    // })
+    let collectionContract: Contract;
 
-    // it('should create a collection by paying the fees in acceptedToken :: Relayed EIP721 :: Gas estimation', async function () {
-    //   this.timeout(100000)
-    //   await raritiesContract.updatePrices(
-    //     getRarityNames(),
-    //     getRarityDefaulPrices().map((_) => 1)
-    //   )
+    beforeEach(async () => {
+      const rarities = getInitialRarities();
 
-    //   await manaContract.approve(
-    //     collectionManagerContract.address,
-    //     MAX_UINT256,
-    //     fromUser
-    //   )
+      await raritiesContract
+        .connect(owner)
+        .updatePrices(getRarityNames(), Array(rarities.length).fill(0));
 
-    //   const itemsInTheSameTx = 55
-    //   const items = []
+      const salt = "0x" + genRanHex(64);
+      const createCollectionTx = await collectionManagerContract
+        .connect(owner)
+        .createCollection(
+          forwarderContract.address,
+          factoryContract.address,
+          salt,
+          name,
+          symbol,
+          baseURI,
+          userAddr,
+          ITEMS
+        );
+      let logs = (await createCollectionTx.wait()).events;
+      const collectionContractAddress = logs[1].address;
+      collectionContract = await ethers.getContractAt(
+        "ERC721Collection",
+        collectionContractAddress
+      );
+      await collectionManagerContract.connect(owner).setCommittee(userAddr);
+    });
+    it("should manage a collection", async function () {
+      let isApproved = await collectionContract.isApproved();
+      expect(isApproved).to.be.equal(false);
+      // Approve collection
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setApproved",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      let functionSignature = iface.encodeFunctionData("setApproved", [true]);
+      await collectionManagerContract
+        .connect(user)
+        .manageCollection(
+          forwarderContract.address,
+          collectionContract.address,
+          functionSignature
+        );
+      isApproved = await collectionContract.isApproved();
+      expect(isApproved).to.equal(true);
+      // Approve collection
+      iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setApproved",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      functionSignature = iface.encodeFunctionData("setApproved", [false]);
+      await collectionManagerContract
+        .connect(user)
+        .manageCollection(
+          forwarderContract.address,
+          collectionContract.address,
+          functionSignature
+        );
+      isApproved = await collectionContract.isApproved();
+      expect(isApproved).to.equal(false);
+      // Rescue collection
+      const hash = genRanHex(64);
+      const metadata = "saraza";
+      iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "uint256[]",
+              name: "_itemIds",
+              type: "uint256[]",
+            },
+            {
+              internalType: "string[]",
+              name: "_contentHashes",
+              type: "string[]",
+            },
+            {
+              internalType: "string[]",
+              name: "_metadatas",
+              type: "string[]",
+            },
+          ],
+          name: "rescueItems",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      functionSignature = iface.encodeFunctionData("rescueItems", [
+        [0],
+        [hash],
+        [metadata],
+      ]);
+      await collectionManagerContract
+        .connect(user)
+        .manageCollection(
+          forwarderContract.address,
+          collectionContract.address,
+          functionSignature
+        );
+      const item = await collectionContract.items(0);
+      expect([item.metadata, item.contentHash]).to.be.eql([metadata, hash]);
+      iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setEditable",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      functionSignature = iface.encodeFunctionData("setEditable", [false]);
+      await collectionManagerContract
+        .connect(user)
+        .manageCollection(
+          forwarderContract.address,
+          collectionContract.address,
+          functionSignature
+        );
 
-    //   for (let i = 0; i < itemsInTheSameTx; i++) {
-    //     items.push(ITEMS[i % ITEMS.length])
-    //   }
-
-    //   const salt = web3.utils.randomHex(32)
-    //   const functionSignature = web3.eth.abi.encodeFunctionCall(
-    //     {
-    //       inputs: [
-    //         {
-    //           internalType: 'contract IForwarder',
-    //           name: '_forwarder',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'contract IERC721CollectionFactoryV2',
-    //           name: '_factory',
-    //           type: 'address',
-    //         },
-    //         {
-    //           internalType: 'bytes32',
-    //           name: '_salt',
-    //           type: 'bytes32',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_name',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_symbol',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'string',
-    //           name: '_baseURI',
-    //           type: 'string',
-    //         },
-    //         {
-    //           internalType: 'address',
-    //           name: '_creator',
-    //           type: 'address',
-    //         },
-    //         {
-    //           components: [
-    //             {
-    //               internalType: 'string',
-    //               name: 'rarity',
-    //               type: 'string',
-    //             },
-    //             {
-    //               internalType: 'uint256',
-    //               name: 'price',
-    //               type: 'uint256',
-    //             },
-    //             {
-    //               internalType: 'address',
-    //               name: 'beneficiary',
-    //               type: 'address',
-    //             },
-    //             {
-    //               internalType: 'string',
-    //               name: 'metadata',
-    //               type: 'string',
-    //             },
-    //           ],
-    //           internalType: 'struct IERC721CollectionV2.ItemParam[]',
-    //           name: '_items',
-    //           type: 'tuple[]',
-    //         },
-    //       ],
-    //       name: 'createCollection',
-    //       outputs: [],
-    //       stateMutability: 'nonpayable',
-    //       type: 'function',
-    //     },
-    //     [
-    //       forwarderContract.address,
-    //       factoryContract.address,
-    //       salt,
-    //       name,
-    //       symbol,
-    //       baseURI,
-    //       anotherUser,
-    //       items,
-    //     ]
-    //   )
-
-    //   const res = await sendMetaTx(
-    //     collectionManagerContract,
-    //     functionSignature,
-    //     user,
-    //     relayer,
-    //     null,
-    //     'Decentraland Collection Manager',
-    //     '1'
-    //   )
-
-    //   console.log(
-    //     `Deploy a collection with ${itemsInTheSameTx} items -> Gas Used: ${res.receipt.gasUsed}`
-    //   )
-    // })
-
-    // it('reverts when creating a collection without paying the fees in acceptedToken', async function () {
-    //   await raritiesContract.updatePrices(
-    //     getRarityNames(),
-    //     getRarityDefaulPrices()
-    //   )
-
-    //   const salt = web3.utils.randomHex(32)
-
-    //   await assertRevert(
-    //     collectionManagerContract.createCollection(
-    //       forwarderContract.address,
-    //       factoryContract.address,
-    //       salt,
-    //       name,
-    //       symbol,
-    //       baseURI,
-    //       user,
-    //       ITEMS,
-    //       fromOwner
-    //     )
-    //   )
-
-    //   await manaContract.approve(
-    //     collectionManagerContract.address,
-    //     web3.utils
-    //       .toBN(DEFAULT_RARITY_PRICE)
-    //       .mul(web3.utils.toBN(ITEMS.length))
-    //       .sub(web3.utils.toBN(1)),
-    //     fromUser
-    //   )
-
-    //   await assertRevert(
-    //     collectionManagerContract.createCollection(
-    //       forwarderContract.address,
-    //       factoryContract.address,
-    //       salt,
-    //       name,
-    //       symbol,
-    //       baseURI,
-    //       user,
-    //       ITEMS,
-    //       fromOwner
-    //     )
-    //   )
-    // })
-
-    // it('reverts when forwarder is the contract', async function () {
-    //   const salt = web3.utils.randomHex(32)
-    //   await assertRevert(
-    //     collectionManagerContract.createCollection(
-    //       collectionManagerContract.address,
-    //       factoryContract.address,
-    //       salt,
-    //       name,
-    //       symbol,
-    //       baseURI,
-    //       anotherUser,
-    //       ITEMS,
-    //       fromUser
-    //     ),
-    //     'CollectionManager#createCollection: FORWARDER_CANT_BE_THIS'
-    //   )
-    // })
+      const isEditable = await collectionContract.isEditable();
+      expect(isEditable).to.equal(false);
+    });
+    it("should manage a collection :: Relayed EIP721", async function () {
+      let isApproved = await collectionContract.isApproved();
+      expect(isApproved).to.be.equal(false);
+      // Approve collection
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setApproved",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      let functionSignatureSetApproved = iface.encodeFunctionData(
+        "setApproved",
+        [true]
+      );
+      iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "contract IForwarder",
+              name: "_forwarder",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "_collection",
+              type: "address",
+            },
+            {
+              internalType: "bytes",
+              name: "_data",
+              type: "bytes",
+            },
+          ],
+          name: "manageCollection",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      let functionSignature = iface.encodeFunctionData("manageCollection", [
+        forwarderContract.address,
+        collectionContract.address,
+        functionSignatureSetApproved,
+      ]);
+      await sendMetaTx(
+        collectionManagerContract,
+        functionSignature,
+        userAddr,
+        relayer,
+        null,
+        "Unicial Collection Manager",
+        "1"
+      );
+      isApproved = await collectionContract.isApproved();
+      expect(isApproved).to.equal(true);
+      // Approve collection
+      iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setApproved",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      functionSignatureSetApproved = iface.encodeFunctionData("setApproved", [
+        false,
+      ]);
+      iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "contract IForwarder",
+              name: "_forwarder",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "_collection",
+              type: "address",
+            },
+            {
+              internalType: "bytes",
+              name: "_data",
+              type: "bytes",
+            },
+          ],
+          name: "manageCollection",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      functionSignature = iface.encodeFunctionData("manageCollection", [
+        forwarderContract.address,
+        collectionContract.address,
+        functionSignatureSetApproved,
+      ]);
+      await sendMetaTx(
+        collectionManagerContract,
+        functionSignature,
+        userAddr,
+        relayer,
+        null,
+        "Unicial Collection Manager",
+        "1"
+      );
+      isApproved = await collectionContract.isApproved();
+      expect(isApproved).to.equal(false);
+    });
+    it("reverts when trying to manage not a collection", async function () {
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setApproved",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      let functionSignature = iface.encodeFunctionData("setApproved", [[true]]);
+      await expect(
+        collectionManagerContract
+          .connect(user)
+          .manageCollection(
+            forwarderContract.address,
+            collectionManagerContract.address,
+            functionSignature
+          )
+      ).to.be.revertedWith(
+        "CollectionManager#manageCollection: INVALID_COLLECTION"
+      );
+    });
+    it("reverts when trying to manage a collection by not the committee", async function () {
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setApproved",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      let functionSignature = iface.encodeFunctionData("setApproved", [[true]]);
+      await expect(
+        collectionManagerContract
+          .connect(hacker)
+          .manageCollection(
+            forwarderContract.address,
+            collectionContract.address,
+            functionSignature
+          )
+      ).to.be.revertedWith(
+        "CollectionManager#manageCollection: UNAUTHORIZED_SENDER"
+      );
+      await expect(
+        collectionManagerContract
+          .connect(owner)
+          .manageCollection(
+            forwarderContract.address,
+            collectionContract.address,
+            functionSignature
+          )
+      ).to.be.revertedWith(
+        "CollectionManager#manageCollection: UNAUTHORIZED_SENDER"
+      );
+    });
+    it("reverts when forwarder is the contract", async function () {
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "setApproved",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      const functionSignature = iface.encodeFunctionData("setApproved", [true]);
+      await expect(
+        collectionManagerContract
+          .connect(user)
+          .manageCollection(
+            collectionManagerContract.address,
+            collectionContract.address,
+            functionSignature
+          )
+      ).to.be.revertedWith(
+        "CollectionManager#manageCollection: FORWARDER_CANT_BE_THIS"
+      );
+    });
+    it("reverts when forwarder is the contract", async function () {
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "bool",
+              name: "_value",
+              type: "bool",
+            },
+          ],
+          name: "transferOwnership",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      const functionSignature = iface.encodeFunctionData("transferOwnership", [
+        true,
+      ]);
+      await expect(
+        collectionManagerContract
+          .connect(user)
+          .manageCollection(
+            forwarderContract.address,
+            collectionContract.address,
+            functionSignature
+          )
+      ).to.be.revertedWith(
+        "CollectionManager#manageCollection: COMMITTEE_METHOD_NOT_ALLOWED"
+      );
+    });
   });
 });
