@@ -36,3 +36,4 @@ artifacts
 cache
 tests
 .env
+typechain
