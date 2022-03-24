@@ -17,6 +17,9 @@ concurrency:
 jobs:
   unit:
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: "." # Here the path to the folder where package-lock.json is located.
     strategy:
       matrix:
         os:
@@ -30,6 +33,6 @@ jobs:
         with:
           node-version: "16"
           cache: "npm"
-          cache-dependency-path: subdir/package-lock.json
+          cache-dependency-path: "**/package-lock.json"
       - run: npm install
       - run: npm test
