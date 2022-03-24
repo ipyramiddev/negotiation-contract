@@ -10,7 +10,6 @@ artifacts
 dist
 package-lock.json
 
-
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and *not* Next.js
@@ -36,3 +35,6 @@ artifacts
 cache
 tests
 .env
+typechain
+package-lock.json
+package-lock.json

@@ -1,9 +1,7 @@
-import chai, { expect } from "chai";
+import { expect } from "chai";
 import { BigNumber, Contract, Signer } from "ethers";
-import { artifacts, ethers } from "hardhat";
-import { solidity } from "ethereum-waffle";
+import { ethers } from "hardhat";
 import { getChainId } from "./helper/ChainId";
-import { Interface } from "ethers/lib/utils";
 import { sendMetaTx } from "./helper/MetaTx";
 
 import {
@@ -20,9 +18,7 @@ import {
   DEFAULT_RARITY_PRICE,
   MAX_UINT256,
 } from "./helper/Collection";
-import { hexlify, zeroPad } from "ethers/lib/utils";
 import { balanceSnap } from "./helper/BalanceSnap";
-import { ERC721Collection } from "../typechain";
 
 describe("CollectionManager", function () {
   let UccContract,
