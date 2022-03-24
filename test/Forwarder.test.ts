@@ -36,6 +36,10 @@ describe("Forwarder", function () {
 
     ForwarderContract = await ethers.getContractFactory("Forwarder");
     forwarderContract = await ForwarderContract.deploy(ownerAddr, userAddr);
+
+    await committeeContract
+      .connect(owner)
+      .transferOwnership(forwarderContract.address);
   });
 
   describe("create forwarder", async function () {
@@ -110,6 +114,120 @@ describe("Forwarder", function () {
       await expect(
         forwarderContract.connect(hacker).setCaller(userAddr)
       ).to.be.revertedWith("Ownable: caller is not the owner");
+    });
+  });
+  describe("forwardCall", async function () {
+    it("should forward a call by caller", async function () {
+      let isMember = await committeeContract.members(anotherUserAddr);
+      expect(isMember).to.be.equal(false);
+
+      // Set a member
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "address[]",
+              name: "_members",
+              type: "address[]",
+            },
+            {
+              internalType: "bool[]",
+              name: "_values",
+              type: "bool[]",
+            },
+          ],
+          name: "setMembers",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      const functionSignature = iface.encodeFunctionData("setMembers", [
+        [anotherUserAddr],
+        [true],
+      ]);
+      await forwarderContract
+        .connect(user)
+        .forwardCall(committeeContract.address, functionSignature);
+
+      isMember = await committeeContract.members(anotherUserAddr);
+      expect(isMember).to.be.equal(true);
+    });
+
+    it("should forward a call by owner", async function () {
+      let isMember = await committeeContract.members(anotherUserAddr);
+      expect(isMember).to.be.equal(false);
+
+      // Set a member
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "address[]",
+              name: "_members",
+              type: "address[]",
+            },
+            {
+              internalType: "bool[]",
+              name: "_values",
+              type: "bool[]",
+            },
+          ],
+          name: "setMembers",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      const functionSignature = iface.encodeFunctionData("setMembers", [
+        [anotherUserAddr],
+        [true],
+      ]);
+
+      await forwarderContract
+        .connect(owner)
+        .forwardCall(committeeContract.address, functionSignature);
+
+      isMember = await committeeContract.members(anotherUserAddr);
+      expect(isMember).to.be.equal(true);
+    });
+
+    it("reverts when trying to forward a call by not the caller nor owner", async function () {
+      let iface = new ethers.utils.Interface([
+        {
+          inputs: [
+            {
+              internalType: "address[]",
+              name: "_members",
+              type: "address[]",
+            },
+            {
+              internalType: "bool[]",
+              name: "_values",
+              type: "bool[]",
+            },
+          ],
+          name: "setMembers",
+          outputs: [],
+          stateMutability: "nonpayable",
+          type: "function",
+        },
+      ]);
+      const functionSignature = iface.encodeFunctionData("setMembers", [
+        [anotherUserAddr],
+        [true],
+      ]);
+      await expect(
+        forwarderContract
+          .connect(anotherUser)
+          .forwardCall(committeeContract.address, functionSignature)
+      ).to.be.revertedWith("Owner#forwardCall: UNAUTHORIZED_SENDER");
+
+      await expect(
+        forwarderContract
+          .connect(hacker)
+          .forwardCall(committeeContract.address, functionSignature)
+      ).to.be.revertedWith("Owner#forwardCall: UNAUTHORIZED_SENDER");
     });
   });
 });
