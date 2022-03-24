@@ -49,7 +49,7 @@ jobs:
           node-version: ${{ matrix.node_version }}
 
       - name: Install Yarn project with a clean slate
-        run: yarn install --frozen-lockfile
+        run: yarn install
 
       - name: Create env file
         run: |
