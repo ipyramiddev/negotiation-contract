@@ -36,3 +36,5 @@ cache
 tests
 .env
 typechain
+package-lock.json
+package-lock.json
