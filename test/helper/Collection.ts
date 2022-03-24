@@ -108,3 +108,94 @@ export const ITEMS = [
     "1:tropical_mask:hat:female,male",
   ],
 ];
+export const MAX_UINT256 = BigNumber.from(
+  "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+);
+export const CONTRACT_NAME = "DummyCollection";
+export const CONTRACT_SYMBOL = "SymbolCollection";
+export const getInitData = (options: any) => {
+  const initializeABI = [
+    {
+      inputs: [
+        {
+          internalType: "string",
+          name: "_name",
+          type: "string",
+        },
+        {
+          internalType: "string",
+          name: "_symbol",
+          type: "string",
+        },
+        {
+          internalType: "string",
+          name: "baseURI_",
+          type: "string",
+        },
+        {
+          internalType: "address",
+          name: "_creator",
+          type: "address",
+        },
+        {
+          internalType: "bool",
+          name: "_shouldComplete",
+          type: "bool",
+        },
+        {
+          internalType: "bool",
+          name: "_isApproved",
+          type: "bool",
+        },
+        {
+          internalType: "contract IRarities",
+          name: "_rarities",
+          type: "address",
+        },
+        {
+          components: [
+            {
+              internalType: "string",
+              name: "rarity",
+              type: "string",
+            },
+            {
+              internalType: "uint256",
+              name: "price",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "beneficiary",
+              type: "address",
+            },
+            {
+              internalType: "string",
+              name: "metadata",
+              type: "string",
+            },
+          ],
+          internalType: "struct ERC721BaseCollection.ItemParam[]",
+          name: "_items",
+          type: "tuple[]",
+        },
+      ],
+      name: "initialize",
+      outputs: [],
+      stateMutability: "nonpayable",
+      type: "function",
+    },
+  ];
+  let iface = new ethers.utils.Interface(initializeABI);
+  const functionSignature = iface.encodeFunctionData("initialize", [
+    options.name || CONTRACT_NAME,
+    options.symbol || CONTRACT_SYMBOL,
+    options.baseURI || BASE_URI,
+    options.creator,
+    options.shouldComplete,
+    options.shouldApprove,
+    options.rarities,
+    options.items || ITEMS,
+  ]);
+  return functionSignature;
+};
