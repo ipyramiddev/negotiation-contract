@@ -43,15 +43,7 @@ jobs:
         run: yarn install --frozen-lockfile
 
       - name: Hardhat tests
-        run: yarn test:hh
-
-      - name: Install Foundry
-        uses: onbjerg/foundry-toolchain@v1
-        with:
-          version: nightly
-
-      - name: Foundry tests
-        run: yarn test:forge
+        run: yarn test
 
       - name: Slither static analyser
         uses: crytic/slither-action@v0.1.0
