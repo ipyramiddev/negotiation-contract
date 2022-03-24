@@ -1,0 +1,38 @@
+name: Test smart contracts
+
+on: [push, pull_request]
+
+env:
+  ## Sets environment variable
+  OWNER: ${{ secrets.OWNER }}
+  NETWORK: ${{ secrets.NETWORK }}
+  RPC_URL_ZNX_TESTNET: ${{ secrets.RPC_URL_ZNX_TESTNET }}
+  RPC_URL_ZNX_MAINNET: ${{ secrets.RPC_URL_ZNX_MAINNET }}
+  MNEMONIC: ${{ secrets.MNEMONIC }}
+  COMMITTEE_MEMBERS: ${{ secrets.COMMITTEE_MEMBERS }}
+concurrency:
+  group: ${{github.workflow}}-${{github.ref}}
+  cancel-in-progress: true
+
+jobs:
+  unit:
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: "." # Here the path to the folder where package-lock.json is located.
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+        node_version:
+          - 16
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16"
+          cache: "npm"
+          cache-dependency-path: "**/package-lock.json"
+      - run: npm install
+      - run: npm test
