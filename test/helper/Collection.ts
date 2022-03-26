@@ -1,5 +1,7 @@
-import { BigNumberish, ethers, BigNumber } from "ethers";
+import { BigNumberish, BigNumber, Contract } from "ethers";
 import { ether } from "./Utils";
+import { ethers } from "hardhat";
+import { hexZeroPad } from "ethers/lib/utils";
 
 interface RARITY {
   name: string;
@@ -57,7 +59,9 @@ export const getRandomAddress = () => {
   return wallet.address;
 };
 
-const BENEFICIARY_ADDRESS = getRandomAddress();
+export const BENEFICIARY_ADDRESS = getRandomAddress();
+export const OTHER_BENEFICIARY_ADDRESS = getRandomAddress();
+
 export const ITEMS = [
   [
     RARITIES_OBJECT.common.name,
@@ -199,3 +203,52 @@ export const getInitData = (options: any) => {
   ]);
   return functionSignature;
 };
+
+export async function createDummyFactory(ownerAddr) {
+  const CollectionImplementation = await ethers.getContractFactory(
+    "ERC721Collection"
+  );
+  const collectionImplementation = await CollectionImplementation.deploy();
+
+  const FactoryContract = await ethers.getContractFactory(
+    "ERC721CollectionFactory"
+  );
+  const factoryContract = await FactoryContract.deploy(
+    ownerAddr,
+    collectionImplementation.address
+  );
+
+  return factoryContract;
+}
+
+export async function createDummyCollection(factory: Contract, options: any) {
+  const salt = "0x" + genRanHex(64);
+  const createCollectionTx = await factory.createCollection(
+    salt,
+    getInitData(options)
+  );
+  const logs = (await createCollectionTx.wait()).events;
+
+  const collectionContractAddress = logs[0].args._address;
+
+  const collectionContract = await ethers.getContractAt(
+    "ERC721Collection",
+    collectionContractAddress
+  );
+
+  return collectionContract;
+}
+
+export function encodeTokenId(a, b) {
+  // hexZeroPad(hexlify(chainId), 32)
+
+  // return web3.utils.toBN(
+  //   `0x${web3.utils.padLeft(a, 10).replace("0x", "")}${web3.utils
+  //     .padLeft(b, 54)
+  //     .replace("0x", "")}`
+  // );
+  return `0x${hexZeroPad(a, 10).replace("0x", "")}${hexZeroPad(b, 54).replace(
+    "0x",
+    ""
+  )}`;
+}
