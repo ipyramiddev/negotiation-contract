@@ -247,8 +247,10 @@ export function encodeTokenId(a, b) {
   //     .padLeft(b, 54)
   //     .replace("0x", "")}`
   // );
-  return `0x${hexZeroPad(a, 10).replace("0x", "")}${hexZeroPad(b, 54).replace(
-    "0x",
-    ""
-  )}`;
+  return BigNumber.from(
+    `0x${hexZeroPad(a, 10).replace("0x", "")}${hexZeroPad(b, 54).replace(
+      "0x",
+      ""
+    )}`
+  );
 }
