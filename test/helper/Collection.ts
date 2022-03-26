@@ -2,6 +2,7 @@ import { BigNumberish, BigNumber, Contract } from "ethers";
 import { ether } from "./Utils";
 import { ethers } from "hardhat";
 import { hexZeroPad } from "ethers/lib/utils";
+import { keccak256 } from "@ethersproject/solidity";
 
 interface RARITY {
   name: string;
@@ -9,7 +10,10 @@ interface RARITY {
   price: BigNumberish;
 }
 export const DEFAULT_RARITY_PRICE = BigNumber.from("100000000000000000000"); // 100 UCC
-
+export const COLLECTION_HASH = keccak256(
+  ["string"],
+  ["Decentraland Collection"]
+);
 const RARITIES: RARITY[] = [
   { name: "common", maxSupply: 100000, price: DEFAULT_RARITY_PRICE },
   { name: "uncommon", maxSupply: 10000, price: DEFAULT_RARITY_PRICE },
@@ -115,6 +119,7 @@ export const ITEMS = [
 export const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
+export const GRACE_PERIOD = 60 * 60 * 24 * 7; // 7 days
 export const CONTRACT_NAME = "DummyCollection";
 export const CONTRACT_SYMBOL = "SymbolCollection";
 export const getInitData = (options: any) => {
