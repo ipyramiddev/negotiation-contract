@@ -148,7 +148,7 @@ abstract contract ERC721BaseCollection is
         // Ownable init
         _initOwnable();
         // EIP712 init
-        _initializeEIP712("Unicial Collection", "2");
+        _initializeEIP712("Unicial Collection", "1");
         // ERC721 init
         _initERC721(_name, _symbol);
         // Base URI init

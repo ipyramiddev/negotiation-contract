@@ -10,10 +10,7 @@ interface RARITY {
   price: BigNumberish;
 }
 export const DEFAULT_RARITY_PRICE = BigNumber.from("100000000000000000000"); // 100 UCC
-export const COLLECTION_HASH = keccak256(
-  ["string"],
-  ["Decentraland Collection"]
-);
+export const COLLECTION_HASH = keccak256(["string"], ["Unicial Collection"]);
 const RARITIES: RARITY[] = [
   { name: "common", maxSupply: 100000, price: DEFAULT_RARITY_PRICE },
   { name: "uncommon", maxSupply: 10000, price: DEFAULT_RARITY_PRICE },
