@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 import "../interfaces/IRarities.sol";
 import "../commons//OwnableInitializable.sol";
@@ -16,7 +17,7 @@ abstract contract ERC721BaseCollection is
     NativeMetaTransaction
 {
     using String for bytes32;
-    using String for uint256;
+    using Strings for uint256;
     using String for address;
     using SafeMath for uint256;
 
@@ -719,14 +720,14 @@ abstract contract ERC721BaseCollection is
             string(
                 abi.encodePacked(
                     _baseURI(),
-                    id.uintToString(),
+                    Strings.toString(id),
                     "/",
                     "0x",
                     address(this).addressToString(),
                     "/",
-                    itemId.uintToString(),
+                    Strings.toString(itemId),
                     "/",
-                    issuedId.uintToString()
+                    Strings.toString(issuedId)
                 )
             );
     }
