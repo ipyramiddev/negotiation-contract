@@ -250,7 +250,7 @@ export function encodeTokenId(a, b) {
   //     .replace("0x", "")}`
   // );
   return BigNumber.from(
-    `0x${hexZeroPad(a, 10).replace("0x", "")}${hexZeroPad(b, 54).replace(
+    `0x${hexZeroPad(a, 5).replace("0x", "")}${hexZeroPad(b, 27).replace(
       "0x",
       ""
     )}`
