@@ -143,7 +143,7 @@ export const getDomainSeparator = async (contract: Contract) => {
         keccak256(toUtf8Bytes("Unicial Collection")),
         keccak256(toUtf8Bytes("1")),
         contract.address,
-        chainId,
+        hexZeroPad(hexlify(chainId), 32),
       ]
     )
   );

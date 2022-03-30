@@ -1,4 +1,4 @@
-import { BigNumberish, BigNumber, Contract } from "ethers";
+import { BigNumberish, BigNumber, Contract, utils } from "ethers";
 import { ether } from "./Utils";
 import { ethers } from "hardhat";
 import { hexZeroPad } from "ethers/lib/utils";
@@ -255,4 +255,12 @@ export function encodeTokenId(a, b) {
       ""
     )}`
   );
+}
+
+export function decodeTokenId(id) {
+  const hexId = hexZeroPad(utils.hexlify(id), 32).replace("0x", "");
+  return [
+    BigNumber.from("0x" + hexId.substring(0, 10)).toNumber(),
+    BigNumber.from("0x" + hexId.substring(10, hexId.length)).toNumber(),
+  ];
 }
