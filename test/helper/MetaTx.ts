@@ -1,5 +1,13 @@
 import { Contract, Signer } from "ethers";
-import { hexlify, hexZeroPad, zeroPad } from "ethers/lib/utils";
+import {
+  defaultAbiCoder,
+  hexlify,
+  hexZeroPad,
+  keccak256,
+  solidityKeccak256,
+  toUtf8Bytes,
+  zeroPad,
+} from "ethers/lib/utils";
 import { getChainId } from "./ChainId";
 import hre from "hardhat";
 
@@ -119,3 +127,24 @@ export async function getSignature(
 //     ),
 //   });
 // }
+
+export const getDomainSeparator = async (contract: Contract) => {
+  const chainId = await contract.getChainId();
+
+  return keccak256(
+    defaultAbiCoder.encode(
+      ["bytes32", "bytes32", "bytes32", "address", "bytes32"],
+      [
+        keccak256(
+          toUtf8Bytes(
+            "EIP712Domain(string name,string version,address verifyingContract,bytes32 salt)"
+          )
+        ),
+        keccak256(toUtf8Bytes("Unicial Collection")),
+        keccak256(toUtf8Bytes("1")),
+        contract.address,
+        hexZeroPad(hexlify(chainId), 32),
+      ]
+    )
+  );
+};

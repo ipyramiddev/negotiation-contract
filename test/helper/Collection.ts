@@ -1,5 +1,8 @@
-import { BigNumberish, ethers, BigNumber } from "ethers";
+import { BigNumberish, BigNumber, Contract, utils } from "ethers";
 import { ether } from "./Utils";
+import { ethers } from "hardhat";
+import { hexZeroPad } from "ethers/lib/utils";
+import { keccak256 } from "@ethersproject/solidity";
 
 interface RARITY {
   name: string;
@@ -7,7 +10,7 @@ interface RARITY {
   price: BigNumberish;
 }
 export const DEFAULT_RARITY_PRICE = BigNumber.from("100000000000000000000"); // 100 UCC
-
+export const COLLECTION_HASH = keccak256(["string"], ["Unicial Collection"]);
 const RARITIES: RARITY[] = [
   { name: "common", maxSupply: 100000, price: DEFAULT_RARITY_PRICE },
   { name: "uncommon", maxSupply: 10000, price: DEFAULT_RARITY_PRICE },
@@ -57,7 +60,9 @@ export const getRandomAddress = () => {
   return wallet.address;
 };
 
-const BENEFICIARY_ADDRESS = getRandomAddress();
+export const BENEFICIARY_ADDRESS = getRandomAddress();
+export const OTHER_BENEFICIARY_ADDRESS = getRandomAddress();
+
 export const ITEMS = [
   [
     RARITIES_OBJECT.common.name,
@@ -111,6 +116,7 @@ export const ITEMS = [
 export const MAX_UINT256 = BigNumber.from(
   "0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
 );
+export const GRACE_PERIOD = 60 * 60 * 24 * 7; // 7 days
 export const CONTRACT_NAME = "DummyCollection";
 export const CONTRACT_SYMBOL = "SymbolCollection";
 export const getInitData = (options: any) => {
@@ -199,3 +205,62 @@ export const getInitData = (options: any) => {
   ]);
   return functionSignature;
 };
+
+export async function createDummyFactory(ownerAddr) {
+  const CollectionImplementation = await ethers.getContractFactory(
+    "ERC721Collection"
+  );
+  const collectionImplementation = await CollectionImplementation.deploy();
+
+  const FactoryContract = await ethers.getContractFactory(
+    "ERC721CollectionFactory"
+  );
+  const factoryContract = await FactoryContract.deploy(
+    ownerAddr,
+    collectionImplementation.address
+  );
+
+  return factoryContract;
+}
+
+export async function createDummyCollection(factory: Contract, options: any) {
+  const salt = "0x" + genRanHex(64);
+  const createCollectionTx = await factory.createCollection(
+    salt,
+    getInitData(options)
+  );
+  const logs = (await createCollectionTx.wait()).events;
+
+  const collectionContractAddress = logs[0].args._address;
+
+  const collectionContract = await ethers.getContractAt(
+    "ERC721Collection",
+    collectionContractAddress
+  );
+
+  return collectionContract;
+}
+
+export function encodeTokenId(a, b) {
+  // hexZeroPad(hexlify(chainId), 32)
+
+  // return web3.utils.toBN(
+  //   `0x${web3.utils.padLeft(a, 10).replace("0x", "")}${web3.utils
+  //     .padLeft(b, 54)
+  //     .replace("0x", "")}`
+  // );
+  return BigNumber.from(
+    `0x${hexZeroPad(a, 5).replace("0x", "")}${hexZeroPad(b, 27).replace(
+      "0x",
+      ""
+    )}`
+  );
+}
+
+export function decodeTokenId(id) {
+  const hexId = hexZeroPad(utils.hexlify(id), 32).replace("0x", "");
+  return [
+    BigNumber.from("0x" + hexId.substring(0, 10)).toNumber(),
+    BigNumber.from("0x" + hexId.substring(10, hexId.length)).toNumber(),
+  ];
+}

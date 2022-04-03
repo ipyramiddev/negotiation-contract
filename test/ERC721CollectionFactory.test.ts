@@ -12,7 +12,13 @@ import {
   getInitData,
   RARITIES_OBJECT,
 } from "./helper/Collection";
-import { hexlify, keccak256, solidityPack, zeroPad } from "ethers/lib/utils";
+import {
+  hexlify,
+  keccak256,
+  solidityKeccak256,
+  solidityPack,
+  zeroPad,
+} from "ethers/lib/utils";
 
 describe("CollectionFactory", function () {
   let CollectionImplementation, FactoryContract, RaritiesContract;
@@ -54,16 +60,6 @@ describe("CollectionFactory", function () {
       factoryOwnerAddr,
       collectionImplementation.address
     );
-
-    // console.log("==============CONTRACTS DEPLOYED================");
-    // console.log("UCC Token", uccContract.address);
-    // console.log("Committe", committeeContract.address);
-    // console.log("Rarities", raritiesContract.address);
-    // console.log("Collection Manager", collectionManagerContract.address);
-    // console.log("Collection Implementation", collectionImplementation.address);
-    // console.log("Forwarder", forwarderContract.address);
-    // console.log("Factory", factoryContract.address);
-    // console.log("================================================");
   });
 
   describe("create factory", async function () {
@@ -93,7 +89,9 @@ describe("CollectionFactory", function () {
       );
       expect(await contract.owner()).to.be.equal(factoryOwnerAddr);
       expect(await contract.code()).to.be.equal(expectedCode.toLowerCase());
-      // expect(await contract.codeHash()).to.be.equal(web3.utils.soliditySha3(expectedCode));
+      expect(await contract.codeHash()).to.be.equal(
+        solidityKeccak256(["bytes"], [expectedCode])
+      );
     });
   });
   describe("getAddress", function () {
